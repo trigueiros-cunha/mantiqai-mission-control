@@ -3,7 +3,7 @@ import { ConnectionStatus, OpenClawFrame } from './types'
 type FrameHandler = (frame: OpenClawFrame) => void
 type StatusHandler = (status: ConnectionStatus) => void
 
-const WS_URL = process.env.NEXT_PUBLIC_OPENCLAW_WS ?? 'ws://187.124.44.65:53823/ws'
+const WS_URL = process.env.NEXT_PUBLIC_OPENCLAW_WS ?? 'wss://openclaw-luz6.srv1506369.hstgr.cloud/ws'
 const TOKEN = process.env.NEXT_PUBLIC_OPENCLAW_TOKEN ?? ''
 const HEARTBEAT_MS = 25_000
 const MAX_BACKOFF_MS = 30_000
