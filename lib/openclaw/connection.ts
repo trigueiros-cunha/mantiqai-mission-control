@@ -4,7 +4,7 @@ type FrameHandler = (frame: OpenClawFrame) => void
 type StatusHandler = (status: ConnectionStatus) => void
 
 const WS_URL = 'wss://openclaw-luz6.srv1506369.hstgr.cloud/ws'
-const TOKEN = 'zJpZgL6n3v58jRo6QZ04Z06sKdQDwMPB'
+const TOKEN = 'zJpZgL6n3v58jRo6QZ04Z06sKdQDwMPB'escre
 const HEARTBEAT_MS = 25_000
 const MAX_BACKOFF_MS = 30_000
 
@@ -92,7 +92,14 @@ class OpenClawConnection {
 
       // Handle challenge-response auth
       if (frame.type === 'req' && frame.method === 'connect.challenge') {
-        this.send({ type: 'res', id: frame.id, result: { token: TOKEN } })
+        this.send({ 
+          type: 'res', 
+          id: frame.id, 
+          result: { 
+            token: TOKEN,
+            nonce: frame.params.nonce // <--- ESTA LINHA É A CHAVE
+          } 
+        })
         return
       }
 
