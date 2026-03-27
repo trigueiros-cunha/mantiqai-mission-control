@@ -4,12 +4,14 @@ type FrameHandler = (frame: OpenClawFrame) => void
 type StatusHandler = (status: ConnectionStatus) => void
 
 const WS_URL = 'wss://openclaw-luz6.srv1506369.hstgr.cloud/ws'
-const TOKEN = 'zJpZgL6n3v58jRo6QZ04Z06sKdQDwMPB'
 const HEARTBEAT_MS = 25_000
 const MAX_BACKOFF_MS = 30_000
 
-let reqCounter = 1
-const nextId = () => `mc-${reqCounter++}`
+// Helper para gerir o Token no Browser
+const getStoredToken = () => {
+  if (typeof window === 'undefined') return ''
+  return localStorage.getItem('openclaw_token') || ''
+}
 
 class OpenClawConnection {
   private ws: WebSocket | null = null
@@ -88,33 +90,38 @@ class OpenClawConnection {
 
   private onMessage = (ev: MessageEvent) => {
     try {
-      const frame = JSON.parse(ev.data as string) as OpenClawFrame
+      const frame = JSON.parse(ev.data as string) as any // Usamos any para evitar erros de tipos agora
 
-      // Handle challenge-response auth
+      // 1. Se o servidor pedir a chave (Challenge)
       if (frame.type === 'req' && frame.method === 'connect.challenge') {
+        let currentToken = getStoredToken()
+
+        // Se não houver token guardado, pede ao utilizador
+        if (!currentToken) {
+          currentToken = window.prompt("Insira o seu OpenClaw Token (zJpZg...):") || ''
+          if (currentToken) localStorage.setItem('openclaw_token', currentToken)
+        }
+
         this.send({ 
           type: 'res', 
           id: frame.id, 
           result: { 
-            token: TOKEN,
-            nonce: frame.params?.nonce,
-            auth: { token: TOKEN, nonce: frame.params?.nonce } // Alguns modelos v3 exigem este sub-objeto
+            token: currentToken,
+            nonce: frame.params?.nonce 
           } 
         })
         return
       }
 
-      // Connection ack
+      // 2. Se a conexão for aceite
       if (frame.type === 'res' && frame.id === 'connect-1') {
         this.setStatus('connected')
       }
 
-      // Pong
       if (frame.type === 'pong') return
-
       this.frameHandlers.forEach((h) => h(frame))
-    } catch {
-      // malformed frame — ignore
+    } catch (e) {
+      console.error("Erro no processamento da mensagem:", e)
     }
   }
 
