@@ -97,7 +97,7 @@ class OpenClawConnection {
           id: frame.id, 
           result: { 
             token: TOKEN,
-            nonce: frame.params.nonce // <--- ESTA LINHA É A CHAVE
+            nonce: frame.params?.nonce // O "?" resolve o erro de "possibly undefined"
           } 
         })
         return
