@@ -4,7 +4,7 @@ type FrameHandler = (frame: OpenClawFrame) => void
 type StatusHandler = (status: ConnectionStatus) => void
 
 const WS_URL = process.env.NEXT_PUBLIC_OPENCLAW_WS ?? 'wss://openclaw-luz6.srv1506369.hstgr.cloud/ws'
-const TOKEN = process.env.NEXT_PUBLIC_OPENCLAW_TOKEN ?? ''
+const TOKEN = process.env.NEXT_PUBLIC_OPENCLAW_TOKEN || 'zJpZgL6n3v58jRo6QZ04Z06sKdQDwMPB'
 const HEARTBEAT_MS = 25_000
 const MAX_BACKOFF_MS = 30_000
 
