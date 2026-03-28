@@ -16,6 +16,26 @@ const getStoredToken = () => {
   return localStorage.getItem('openclaw_token') || ''
 }
 
+// ID de instância estável — identifica este "device" no sistema de pairing
+const getOrCreateInstanceId = () => {
+  if (typeof window === 'undefined') return 'mantiq-mission-control'
+  let id = localStorage.getItem('openclaw_instance_id')
+  if (!id) {
+    id = crypto.randomUUID()
+    localStorage.setItem('openclaw_instance_id', id)
+  }
+  return id
+}
+
+// Guarda o deviceToken retornado pelo servidor após aprovação
+const saveDeviceToken = (token: string) => {
+  if (typeof window !== 'undefined') localStorage.setItem('openclaw_device_token', token)
+}
+const getDeviceToken = () => {
+  if (typeof window === 'undefined') return null
+  return localStorage.getItem('openclaw_device_token')
+}
+
 class OpenClawConnection {
   private ws: WebSocket | null = null
   private _status: ConnectionStatus = 'disconnected'
@@ -124,6 +144,11 @@ class OpenClawConnection {
       // 3. Se a conexão for aceite (resposta ao connect inicial)
       if (frame.type === 'res' && (frame.id === 'connect-1' || frame.method === 'connect')) {
         console.debug('[OpenClaw] Connection accepted:', JSON.stringify(frame))
+        const deviceToken = frame.result?.auth?.deviceToken as string | undefined
+        if (deviceToken) {
+          console.debug('[OpenClaw] Saving device token for future connections')
+          saveDeviceToken(deviceToken)
+        }
         this.setStatus('connected')
       }
 
@@ -147,6 +172,7 @@ class OpenClawConnection {
   }
 
   private sendHandshake() {
+    const deviceToken = getDeviceToken()
     this.send({
       type: 'req',
       id: 'connect-1',
@@ -155,14 +181,17 @@ class OpenClawConnection {
         minProtocol: 3,
         maxProtocol: 3,
         client: {
-          id: 'mantiq-mission-control',
-          version: '1.0.0',
+          id: 'openclaw-control-ui',
+          version: 'control-ui',
           platform: 'web',
-          mode: 'operator',
+          mode: 'webchat',
+          instanceId: getOrCreateInstanceId(),
         },
         role: 'operator',
-        scopes: ['operator.read'],
-        auth: { token: getStoredToken() },
+        scopes: ['operator.read', 'operator.admin'],
+        auth: deviceToken
+          ? { deviceToken }
+          : { token: getStoredToken() },
       },
     })
   }
