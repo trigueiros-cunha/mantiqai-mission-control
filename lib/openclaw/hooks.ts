@@ -26,6 +26,7 @@ export function useOpenClaw() {
 export function useSystemHealth() {
   const agents = useStore((s) => s.agents)
   const connectionStatus = useStore((s) => s.connectionStatus)
+  const updateLiveAgent = useStore((s) => s.updateLiveAgentStatus)
 
   const [metrics, setMetrics] = useState<SystemMetrics>({
     uptime: 0,
@@ -52,13 +53,23 @@ export function useSystemHealth() {
           totalAgents: s.agents?.length ?? agents.length,
           activeSessions: s.sessions?.length ?? 0,
         })
+
+        // Wire per-agent stats from HTTP into live store
+        s.agents?.forEach((a) => {
+          updateLiveAgent(a.id.toLowerCase(), {
+            status: a.status,
+            messagesTotal: a.messagesTotal ?? 0,
+            tokensToday: a.tokensToday ?? 0,
+            costToday: a.costToday ?? 0,
+          })
+        })
       } catch {}
     }
 
     poll()
     const t = setInterval(poll, 60_000)
     return () => clearInterval(t)
-  }, [connectionStatus, agents.length])
+  }, [connectionStatus, agents.length, updateLiveAgent])
 
   return metrics
 }
