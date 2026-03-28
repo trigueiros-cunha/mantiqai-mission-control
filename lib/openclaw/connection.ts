@@ -10,10 +10,12 @@ const MAX_BACKOFF_MS = 30_000
 let _idCounter = 0
 const nextId = () => `mc-${++_idCounter}`
 
+const FALLBACK_TOKEN = 'zJpZgL6n3v58jRo6QZ04Z06sKdQDwMPB'
+
 // Helper para gerir o Token no Browser
 const getStoredToken = () => {
-  if (typeof window === 'undefined') return ''
-  return localStorage.getItem('openclaw_token') || ''
+  if (typeof window === 'undefined') return FALLBACK_TOKEN
+  return localStorage.getItem('openclaw_token') || FALLBACK_TOKEN
 }
 
 // ID de instância estável — identifica este "device" no sistema de pairing
