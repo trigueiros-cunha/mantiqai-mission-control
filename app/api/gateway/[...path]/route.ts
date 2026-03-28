@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 
 const OPENCLAW_URL = process.env.NEXT_PUBLIC_OPENCLAW_URL ?? 'https://openclaw-luz6.srv1506369.hstgr.cloud'
-const OPENCLAW_TOKEN = process.env.OPENCLAW_GATEWAY_TOKEN ?? ''
+const OPENCLAW_TOKEN = process.env.OPENCLAW_GATEWAY_TOKEN ?? 'zJpZgL6n3v58jRo6QZ04Z06sKdQDwMPB'
 
 // ── Session cache ──────────────────────────────────────────────────────────
 // Module-level so it survives across requests within the same serverless
