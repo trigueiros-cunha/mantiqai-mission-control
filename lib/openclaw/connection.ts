@@ -7,6 +7,9 @@ const WS_URL = 'wss://openclaw-luz6.srv1506369.hstgr.cloud/ws'
 const HEARTBEAT_MS = 25_000
 const MAX_BACKOFF_MS = 30_000
 
+let _idCounter = 0
+const nextId = () => `mc-${++_idCounter}`
+
 // Helper para gerir o Token no Browser
 const getStoredToken = () => {
   if (typeof window === 'undefined') return ''
@@ -92,7 +95,14 @@ class OpenClawConnection {
     try {
       const frame = JSON.parse(ev.data as string) as any // Usamos any para evitar erros de tipos agora
 
-      // 1. Se o servidor pedir a chave (Challenge)
+      // 1. Captura erros explícitos do servidor
+      if (frame.type === 'err') {
+        console.error('[OpenClaw] Server error frame:', JSON.stringify(frame))
+        this.setStatus('error')
+        return
+      }
+
+      // 2. Se o servidor pedir a chave (Challenge)
       if (frame.type === 'req' && frame.method === 'connect.challenge') {
         let currentToken = getStoredToken()
 
@@ -102,19 +112,18 @@ class OpenClawConnection {
           if (currentToken) localStorage.setItem('openclaw_token', currentToken)
         }
 
-        this.send({ 
-          type: 'res', 
-          id: frame.id, 
-          result: { 
-            token: currentToken,
-            nonce: frame.params?.nonce 
-          } 
+        console.debug('[OpenClaw] Responding to connect.challenge, id:', frame.id, 'nonce:', frame.params?.nonce)
+        this.send({
+          type: 'res',
+          id: frame.id,
+          result: { token: currentToken }
         })
         return
       }
 
-      // 2. Se a conexão for aceite
-      if (frame.type === 'res' && frame.id === 'connect-1') {
+      // 3. Se a conexão for aceite (resposta ao connect inicial)
+      if (frame.type === 'res' && (frame.id === 'connect-1' || frame.method === 'connect')) {
+        console.debug('[OpenClaw] Connection accepted:', JSON.stringify(frame))
         this.setStatus('connected')
       }
 
@@ -153,7 +162,7 @@ class OpenClawConnection {
         },
         role: 'operator',
         scopes: ['operator.read'],
-        auth: { token: TOKEN },
+        auth: { token: getStoredToken() },
       },
     })
   }
