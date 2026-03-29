@@ -80,4 +80,6 @@ export interface SystemMetrics {
   activeAgents: number
   totalAgents: number
   activeSessions: number
+  creditBalance: number | null
+  remainingBalance: number | null
 }

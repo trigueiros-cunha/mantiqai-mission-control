@@ -1,5 +1,6 @@
 'use client'
 
+import { useSystemHealth } from '@/lib/openclaw/hooks'
 import { useStore } from '@/lib/store'
 import StatCard from '@/components/shared/StatCard'
 import ActivityFeed from '@/components/command/ActivityFeed'
@@ -14,7 +15,8 @@ import { TrendingUp, Bot, CheckSquare, Zap, DollarSign } from 'lucide-react'
 
 export default function CommandPage() {
   const { getTotalMRR, getTotalPipelineValue, getActiveAgents, getOpenTasks, getTodayAPICost, agents, tasks } = useStore()
-
+  
+  const metrics = useSystemHealth()
   const totalMRR = getTotalMRR()
   const pipelineValue = getTotalPipelineValue()
   const activeAgents = getActiveAgents()
@@ -98,6 +100,9 @@ export default function CommandPage() {
             <span className="text-xs font-mono text-text-muted">{costProgress}%</span>
           </div>
           <span className="text-[10px] text-text-muted">Budget: {formatEuro(DAILY_API_BUDGET)}/day</span>
+            {metrics.remainingBalance !== null && (
+        <span className="text-[10px] text-success font-medium">Balance: ${metrics.remainingBalance}</span>
+)}
         </div>
       </div>
 

@@ -36,6 +36,8 @@ export function useSystemHealth() {
     activeAgents: 0,
     totalAgents: agents.length,
     activeSessions: 0,
+    creditBalance: null,
+    remainingBalance: null,
   })
 
   useEffect(() => {
@@ -43,18 +45,24 @@ export function useSystemHealth() {
 
     const poll = async () => {
       try {
-        const [h, s] = await Promise.all([getHealth(), getStatus()])
+        const [h, s, u] = await Promise.all([
+          getHealth(),
+          getStatus(),
+          fetch('/api/anthropic/usage', { cache: 'no-store' }).then(r => r.ok ? r.json() : null).catch(() => null),
+        ])
+
         setMetrics({
           uptime: h.uptime ?? 0,
-          totalTokensToday: s.usage?.tokensToday ?? 0,
-          totalCostToday: s.usage?.costToday ?? 0,
+          totalTokensToday: s.usage?.tokensToday ?? u?.totalTokens ?? 0,
+          totalCostToday: s.usage?.costToday ?? u?.totalCostToday ?? 0,
           lastHealthCheck: new Date().toISOString(),
           activeAgents: s.agents?.filter((a) => a.status === 'active').length ?? 0,
           totalAgents: s.agents?.length ?? agents.length,
           activeSessions: s.sessions?.length ?? 0,
+          creditBalance: u?.creditBalance ?? null,
+          remainingBalance: u?.remainingBalance ?? null,
         })
 
-        // Wire per-agent stats from HTTP into live store
         s.agents?.forEach((a) => {
           updateLiveAgent(a.id.toLowerCase(), {
             status: a.status,
@@ -73,7 +81,6 @@ export function useSystemHealth() {
 
   return metrics
 }
-
 export function useAgentStats(agentId: string) {
   const agent = useStore((s) => s.agents.find((a) => a.id === agentId))
   const live = useStore((s) => s.liveAgentStatuses[agentId])
