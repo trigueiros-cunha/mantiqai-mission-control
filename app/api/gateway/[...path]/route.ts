@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-// Force Node.js runtime (not Edge) so we can use the 'ws' module
 export const runtime = 'nodejs'
 export const maxDuration = 15
 
@@ -10,11 +9,18 @@ const OPENCLAW_TOKEN = process.env.OPENCLAW_GATEWAY_TOKEN
                      ?? 'zJpZgL6n3v58jRo6QZ04Z06sKdQDwMPB'
 
 function openClawRPC(method: string, params: Record<string, unknown> = {}): Promise<unknown> {
-  // Dynamic import to avoid edge bundling issues
-  return new Promise(async (resolve, reject) => {
-    const { default: WebSocket } = await import('ws')
+  return new Promise((resolve, reject) => {
+    // Use native globalThis.WebSocket (available in Node 21+)
+    // or fallback to undici WebSocket (Node 18-20)
+    let WS: typeof WebSocket
+    try {
+      WS = globalThis.WebSocket
+    } catch {
+      reject(new Error('WebSocket not available'))
+      return
+    }
 
-    const ws = new WebSocket(OPENCLAW_WS)
+    const ws = new WS(OPENCLAW_WS)
     const timer = setTimeout(() => {
       ws.close()
       reject(new Error('OpenClaw RPC timed out after 12000ms'))
@@ -22,17 +28,11 @@ function openClawRPC(method: string, params: Record<string, unknown> = {}): Prom
 
     const cleanup = () => { clearTimeout(timer); try { ws.close() } catch {} }
 
-    ws.on('error', (err) => { cleanup(); reject(err) })
+    ws.onerror = () => { cleanup(); reject(new Error('WebSocket connection failed')) }
 
-    ws.on('open', () => {
-      console.log('[gateway-proxy] WebSocket opened to', OPENCLAW_WS)
-    })
-
-    ws.on('message', (raw) => {
+    ws.onmessage = (event) => {
       let msg: any
-      try { msg = JSON.parse(raw.toString()) } catch { return }
-
-      console.log('[gateway-proxy] msg:', msg.type, msg.event ?? msg.id ?? '')
+      try { msg = JSON.parse(String(event.data)) } catch { return }
 
       if (msg.type === 'event' && msg.event === 'connect.challenge') {
         ws.send(JSON.stringify({
@@ -63,7 +63,6 @@ function openClawRPC(method: string, params: Record<string, unknown> = {}): Prom
           reject(new Error(msg.error?.message ?? 'connect rejected'))
           return
         }
-        console.log('[gateway-proxy] connected, sending RPC:', method)
         ws.send(JSON.stringify({ type: 'req', id: 'rpc', method, params }))
         return
       }
@@ -73,7 +72,7 @@ function openClawRPC(method: string, params: Record<string, unknown> = {}): Prom
         if (msg.ok) resolve(msg.payload)
         else reject(new Error(msg.error?.message ?? 'RPC failed'))
       }
-    })
+    }
   })
 }
 
