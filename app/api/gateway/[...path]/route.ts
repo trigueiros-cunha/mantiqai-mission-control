@@ -43,10 +43,10 @@ function openClawRPC(method: string, params: Record<string, unknown> = {}): Prom
             minProtocol: 3,
             maxProtocol: 3,
             client: {
-              id: 'mission-control-proxy',
+              id: 'gateway-client',
               version: '1.0.0',
               platform: 'vercel',
-              mode: 'backend',
+              mode: 'backend' as const,
             },
             role: 'operator',
             scopes: ['operator.admin'],
