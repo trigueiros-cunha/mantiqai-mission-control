@@ -49,7 +49,7 @@ function openClawRPC(method: string, params: Record<string, unknown> = {}): Prom
               mode: 'backend' as const,
             },
             role: 'operator',
-            scopes: ['operator.admin'],
+            scopes: ['operator.admin', 'operator.read', 'operator.approvals', 'operator.pairing'],
             caps: ['tool-events'],
             auth: { token: OPENCLAW_TOKEN },
           },
