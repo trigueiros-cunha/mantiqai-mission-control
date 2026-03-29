@@ -63,6 +63,7 @@ function openClawRPC(method: string, params: Record<string, unknown> = {}): Prom
           reject(new Error(msg.error?.message ?? 'connect rejected'))
           return
         }
+        console.log('[gateway-proxy] hello payload:', JSON.stringify(msg.payload).substring(0, 500))
         ws.send(JSON.stringify({ type: 'req', id: 'rpc', method, params }))
         return
       }
