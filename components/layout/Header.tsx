@@ -2,11 +2,10 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { format } from 'date-fns'
-import { Bell, Search, Plus, ChevronDown, Wifi, WifiOff, Loader2 } from 'lucide-react'
+import { Bell, Search, Wifi, WifiOff, Loader2 } from 'lucide-react'
 import { useStore } from '@/lib/store'
 import { useOpenClaw } from '@/lib/openclaw/hooks'
 import { cn } from '@/lib/utils'
-import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 
 function LiveClock() {
@@ -26,7 +25,6 @@ export default function Header() {
   const { agents, notifications, deals, clients, tasks, searchQuery, setSearchQuery, connectionStatus } = useStore()
   const { reconnect } = useOpenClaw()
   const router = useRouter()
-  const [showQuickActions, setShowQuickActions] = useState(false)
   const [showNotifications, setShowNotifications] = useState(false)
   const [showSearch, setShowSearch] = useState(false)
   const searchRef = useRef<HTMLDivElement>(null)
@@ -144,34 +142,6 @@ export default function Header() {
       </div>
 
       <div className="flex items-center gap-2 ml-auto">
-        {/* Quick Actions */}
-        <div className="relative">
-          <button
-            onClick={() => setShowQuickActions(!showQuickActions)}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-accent-violet/15 hover:bg-accent-violet/25 border border-accent-violet/30 rounded-lg text-accent-violet text-xs font-medium transition-all"
-          >
-            <Plus className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">New</span>
-            <ChevronDown className="w-3 h-3 hidden sm:block" />
-          </button>
-          {showQuickActions && (
-            <div className="absolute right-0 top-full mt-1 w-40 bg-bg-card border border-border rounded-lg shadow-xl z-50 py-1">
-              <Link href="/pipeline" onClick={() => setShowQuickActions(false)}
-                className="flex items-center gap-2 px-3 py-2 text-xs text-text-secondary hover:text-text-primary hover:bg-bg-elevated transition-colors">
-                📊 New Lead
-              </Link>
-              <Link href="/tasks" onClick={() => setShowQuickActions(false)}
-                className="flex items-center gap-2 px-3 py-2 text-xs text-text-secondary hover:text-text-primary hover:bg-bg-elevated transition-colors">
-                ✅ New Task
-              </Link>
-              <Link href="/clients" onClick={() => setShowQuickActions(false)}
-                className="flex items-center gap-2 px-3 py-2 text-xs text-text-secondary hover:text-text-primary hover:bg-bg-elevated transition-colors">
-                🏢 New Client
-              </Link>
-            </div>
-          )}
-        </div>
-
         {/* Notifications */}
         <div className="relative">
           <button
