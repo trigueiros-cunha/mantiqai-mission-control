@@ -87,7 +87,7 @@ export default function AgentsPage() {
       </div>
 
       {/* Real Usage Breakdown — only shown when real data is available */}
-      {usage && Object.keys(usage.byModel).length > 0 && (
+      {usage && usage.byModel && Object.keys(usage.byModel).length > 0 && (
         <div className="bg-bg-card border border-border rounded-xl p-4">
           <h3 className="text-sm font-semibold text-text-primary mb-3 flex items-center gap-2">
             Usage by Model
