@@ -40,17 +40,16 @@ export default function FinancialsPage() {
   const grossMargin = totalMRR - totalCost
   const grossMarginPct = calcMarginPercent(totalMRR, totalCost)
 
-  // MRR history (last 12 months)
+  // MRR history (last 12 months — linear growth curve from 0 to current MRR)
   const mrrHistory = Array.from({ length: 12 }, (_, i) => {
     const date = subMonths(new Date(), 11 - i)
     const progressFactor = (i + 1) / 12
     return {
       month: format(date, 'MMM'),
-      MRR: Math.round(totalMRR * progressFactor * (0.7 + Math.random() * 0.2)),
+      MRR: i === 11 ? totalMRR : Math.round(totalMRR * progressFactor),
       Target: Math.round((MRR_TARGET / 12) * (i + 1)),
     }
   })
-  mrrHistory[11].MRR = totalMRR
 
   // Cost breakdown
   const costData = [

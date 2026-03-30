@@ -17,9 +17,13 @@ interface UsageData {
 }
 
 export default function AgentsPage() {
-  const { agents } = useStore()
+  const { agents, activity } = useStore()
   const [usage, setUsage] = useState<UsageData | null>(null)
   const [usageLoading, setUsageLoading] = useState(true)
+
+  const recentAlerts = activity
+    .filter((a) => a.type === 'warning' || a.type === 'error')
+    .slice(0, 10)
 
   const activeCount = agents.filter((a) => a.status === 'active').length
 
@@ -131,15 +135,18 @@ export default function AgentsPage() {
       <div className="bg-bg-card border border-border rounded-xl p-4">
         <h3 className="text-sm font-semibold text-text-primary mb-4">Recent Alerts</h3>
         <div className="space-y-2">
-          {[
-            { agent: 'Keeper', msg: 'Response time spike on Casa Porto Premium — auto-resolved', time: '11:42', color: 'text-warning' },
-            { agent: 'QA', msg: 'Test blocked: waiting on Developer to complete WhatsApp integration', time: '10:15', color: 'text-warning' },
-            { agent: 'Builder', msg: 'Idle state — no tasks assigned since 09:00', time: '09:05', color: 'text-info' },
-          ].map((alert, i) => (
-            <div key={i} className="flex items-start gap-3 bg-bg-surface border border-border rounded-lg px-3 py-2.5 text-xs">
-              <span className={`font-medium flex-shrink-0 ${alert.color}`}>{alert.agent}</span>
-              <span className="text-text-muted flex-1">{alert.msg}</span>
-              <span className="font-mono text-text-faint flex-shrink-0">{alert.time}</span>
+          {recentAlerts.length === 0 && (
+            <div className="text-xs text-text-muted py-4 text-center">No alerts recorded yet.</div>
+          )}
+          {recentAlerts.map((alert) => (
+            <div key={alert.id} className="flex items-start gap-3 bg-bg-surface border border-border rounded-lg px-3 py-2.5 text-xs">
+              <span className={`font-medium flex-shrink-0 ${alert.type === 'error' ? 'text-danger' : 'text-warning'}`}>
+                {alert.agentEmoji} {alert.agentName}
+              </span>
+              <span className="text-text-muted flex-1">{alert.action}</span>
+              <span className="font-mono text-text-faint flex-shrink-0">
+                {new Date(alert.timestamp).toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' })}
+              </span>
             </div>
           ))}
         </div>

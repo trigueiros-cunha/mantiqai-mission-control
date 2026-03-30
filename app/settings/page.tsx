@@ -7,11 +7,13 @@ import { getTelegramUrl, formatEuro } from '@/lib/utils'
 import { VPS_COST, MRR_TARGET, DAILY_API_BUDGET } from '@/lib/constants'
 import { ExternalLink, Save, RefreshCw, Server, Bot, DollarSign } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { settingsQueries } from '@/lib/supabase-queries'
 
 export default function SettingsPage() {
   const { agents, updateAgent } = useStore()
   const [activeTab, setActiveTab] = useState<'agents' | 'pricing' | 'system'>('agents')
   const [saved, setSaved] = useState(false)
+  const [saving, setSaving] = useState(false)
 
   const [pricing, setPricing] = useState({
     starter: { setup: 600, monthly: 180, agents: 1, description: 'Perfect for small businesses with 1 AI agent' },
@@ -19,9 +21,32 @@ export default function SettingsPage() {
     enterprise: { setup: 2400, monthly: 900, agents: 7, description: 'Full agent team for large operations' },
   })
 
-  const handleSave = () => {
-    setSaved(true)
-    setTimeout(() => setSaved(false), 2000)
+  const [budget, setBudget] = useState({
+    daily_api_budget: DAILY_API_BUDGET,
+    vps_cost: VPS_COST,
+    mrr_target: MRR_TARGET,
+  })
+
+  const handleSave = async () => {
+    setSaving(true)
+    try {
+      const agentConfig = Object.fromEntries(agents.map(a => [a.id, { model: a.model, status: a.status }]))
+      await Promise.all([
+        settingsQueries.set('pricing', {
+          starter: { setup: pricing.starter.setup, monthly: pricing.starter.monthly, agents: pricing.starter.agents },
+          business: { setup: pricing.business.setup, monthly: pricing.business.monthly, agents: pricing.business.agents },
+          enterprise: { setup: pricing.enterprise.setup, monthly: pricing.enterprise.monthly, agents: pricing.enterprise.agents },
+        }),
+        settingsQueries.set('budget', budget),
+        settingsQueries.set('agent_config', agentConfig),
+      ])
+      setSaved(true)
+      setTimeout(() => setSaved(false), 2000)
+    } catch (err) {
+      console.error('[settings] Save failed:', err)
+    } finally {
+      setSaving(false)
+    }
   }
 
   const inputCls = "bg-bg-surface border border-border rounded-lg px-3 py-2 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-accent-violet/50 w-full"
@@ -41,15 +66,16 @@ export default function SettingsPage() {
         </div>
         <button
           onClick={handleSave}
+          disabled={saving}
           className={cn(
-            'flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all',
+            'flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all disabled:opacity-60',
             saved
               ? 'bg-success/20 text-success border border-success/30'
               : 'bg-accent-violet/20 text-accent-violet border border-accent-violet/30 hover:bg-accent-violet/30'
           )}
         >
           <Save className="w-4 h-4" />
-          {saved ? 'Saved!' : 'Save Changes'}
+          {saved ? 'Saved!' : saving ? 'Saving...' : 'Save Changes'}
         </button>
       </div>
 

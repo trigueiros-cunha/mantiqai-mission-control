@@ -75,13 +75,10 @@ export default function AnalyticsPage() {
     color: AGENT_COLORS[a.id] || '#6d7a96',
   })).sort((a, b) => a.value - b.value)
 
-  // Client health trend (simulated)
+  // Client health trend — uses current health as flat baseline (no random)
   const healthTrend = Array.from({ length: 6 }, (_, i) => ({
     month: format(subDays(new Date(), (5 - i) * 30), 'MMM'),
-    ...Object.fromEntries(clients.map(c => [
-      c.company.split(' ')[0],
-      Math.min(100, c.health + (Math.random() - 0.5) * 10)
-    ])),
+    ...Object.fromEntries(clients.map(c => [c.company.split(' ')[0], c.health])),
   }))
 
   // Deals by sector
